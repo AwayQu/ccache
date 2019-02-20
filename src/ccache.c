@@ -832,6 +832,54 @@ init_included_files_table(void)
 	}
 }
 
+static char *utf8_path(char *inc_path)
+{
+  char *utf8_path = malloc(sizeof(char) * 1024);
+  memset(utf8_path, 0, 1024);
+  unsigned long pos = 0;
+  char tmp = 0;
+  int start = -1;
+  unsigned long inc_path_len = strlen(inc_path);
+  for (unsigned long i = 0; i < inc_path_len; i++)
+  {
+    if (inc_path[i] != '\\' && start != -1)
+    {
+      utf8_path[pos++] = inc_path[i];
+
+    }
+    else if (start != -1) {
+      char unit = inc_path[i] - '0';
+      start++;
+      int shift = (3 * (3 - start));
+      char factor;
+      if (shift == 6)
+      {
+        factor = 64;
+      }
+      else if (shift == 3)
+      {
+        factor = 8;
+      }
+      else {
+        factor = 1;
+      }
+      char res = unit * factor;
+      tmp += res;
+      if (start == 3)
+      {
+        start = -1;
+        utf8_path[pos++] = tmp;
+      }
+    }
+    else if (start == -1)
+    {
+      start++;
+      tmp = 0;
+    }
+  }
+  return utf8_path;
+}
+
 // This function reads and hashes a file. While doing this, it also does these
 // things:
 //
@@ -982,7 +1030,9 @@ process_preprocessed_file(struct hash *hash, const char *path, bool pump)
 				hash_string_buffer(hash, inc_path, strlen(inc_path));
 			}
 
-			remember_include_file(inc_path, hash, system, NULL);
+      char *include_path = utf8_path(inc_path);
+      free(inc_path);
+			remember_include_file(include_path, hash, system, NULL);
 			p = q; // Everything of interest between p and q has been hashed now.
 		} else if (q[0] == '.' && q[1] == 'i' && q[2] == 'n' && q[3] == 'c'
 		           && q[4] == 'b' && q[5] == 'i' && q[6] == 'n') {
