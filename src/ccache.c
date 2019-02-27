@@ -842,7 +842,7 @@ static char *utf8_path(char *inc_path)
   unsigned long inc_path_len = strlen(inc_path);
   for (unsigned long i = 0; i < inc_path_len; i++)
   {
-    if (inc_path[i] != '\\' && start != -1)
+    if (inc_path[i] != '\\' && start == -1)
     {
       utf8_path[pos++] = inc_path[i];
 
